@@ -2,7 +2,7 @@
 
 A robust Java-based simulation of a sensor fleet (drones, IoT devices) using multi-threaded architecture and thread-safe data synchronization.
 
-## 🏗 System Architecture
+## System Architecture
 The project demonstrates core software engineering principles:
 - **Abstraction & Polymorphism:** Using a `Sensor` interface and `BaseSensor` abstract class to allow the system to scale with new sensor types without modifying the core logic.
 - **Concurrency (Multithreading):** Each sensor operates on its own thread using Java's `Runnable` interface, simulating independent hardware units.
