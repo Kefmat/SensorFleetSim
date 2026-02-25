@@ -4,6 +4,8 @@
 # Log files
 *.log
 *.txt
+telemetry_log.txt
+session_report.md
 
 # VS Code settings
 .vscode/
