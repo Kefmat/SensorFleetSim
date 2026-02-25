@@ -1,22 +1,120 @@
-# SensorFleetSim - Real-time IoT Fleet Simulator
+# SensorFleetSim
 
-A robust Java-based simulation of a sensor fleet (drones, IoT devices) using multi-threaded architecture and thread-safe data synchronization.
+A real-time IoT fleet simulator written in Java. The project models a network of autonomous sensors (drones and weather stations) communicating with a central telemetry processing hub.
 
 ## System Architecture
-The project demonstrates core software engineering principles:
-- **Abstraction & Polymorphism:** Using a `Sensor` interface and `BaseSensor` abstract class to allow the system to scale with new sensor types without modifying the core logic.
-- **Concurrency (Multithreading):** Each sensor operates on its own thread using Java's `Runnable` interface, simulating independent hardware units.
-- **Thread-Safety:** A central `DataHub` utilizes `CopyOnWriteArrayList` and concurrent patterns to handle simultaneous data streams from multiple sensors without data corruption.
 
-## Class Model
-- **`Sensor` (Interface):** Defines the contract (methods) for all sensing units.
-- **`BaseSensor` (Abstract Class):** Implements the lifecycle logic (battery drain, thread loop, hub communication).
-- **`DroneSensor` (Concrete Class):** Simulates a drone with 3D positional telemetry (Lat, Lon, Alt).
-- **`DataHub` (Class):** Acts as the central telemetry processor and data logger.
-- **`FleetManager` (Main):** Orchestrates the simulation using an `ExecutorService` thread pool.
+The project implements a **Centralized Mediator Pattern**. Independent sensor entities operate on dedicated threads, pushing telemetry to a thread-safe `DataHub`.
 
-## Roadmap & Future Enhancements
-- **Critical Alert Logic:** Implement a threshold monitoring system (e.g., auto-triggering alerts for low battery or unsafe altitude).
-- **Sensor Diversity:** Add `WeatherSensor` and `MaritimeSensor` to demonstrate the Open/Closed Principle.
-- **Data Persistence:** Export session logs to JSON or a database for post-flight analysis.
-- **Real-time Dashboard:** Develop a CLI-based visual dashboard to track the live status of the entire fleet.
+### Data Flow & Component Interaction
+```mermaid
+graph TD
+    subgraph Sensors_Layer [Sensor Layer - Multi-threaded]
+        D1[Drone Alpha]
+        D2[Drone Bravo]
+        WS[Weather Station Oslo]
+    end
+
+    subgraph Processing_Layer [Core Logic - DataHub]
+        DH{DataHub}
+        AL[Alert Processor]
+        LOG[Persistent Logger]
+    end
+
+    subgraph UI_Layer [Presentation]
+        CLI[Live Dashboard]
+    end
+
+    D1 & D2 & WS -->|UDP-style Telemetry| DH
+    DH --> AL
+    DH --> LOG
+    AL -->|Trigger| CLI
+``` 
+
+## Key Engineering Features
+
+- **Advanced concurrency** – uses `ExecutorService` for thread lifecycle management and `ConcurrentHashMap`/`CopyOnWriteArrayList` for lock-free, thread-safe state.
+- **Polymorphic telemetry** – `BaseSensor` makes it easy to add new sensor types.
+- **Non-blocking I/O** – `FleetManager` polls `System.in` while refreshing the dashboard at 1 Hz.
+- **Automated risk analysis**
+  - Battery check (warning below 20 %)
+  - Flight safety (altitude threshold)
+  - Meteorological alerts (wind-speed storm detection)
+- **Persistent logging** – every report and alert is appended to `telemetry_log.txt` safely.
+
+
+## Class Architecture
+
+The main classes are:
+
+```text
+classDiagram
+    class BaseSensor {
+        <<abstract>>
+        #String id
+        #double batteryLevel
+        +run()
+        +collectData()*
+        +getStatusReport()*
+    }
+    class DroneSensor {
+        -double altitude
+        +collectData()
+        +getStatusReport()
+    }
+    class WeatherSensor {
+        -double windSpeed
+        +collectData()
+        +getStatusReport()
+    }
+    class DataHub {
+        -ConcurrentHashMap latestReports
+        +receiveData(String report)
+        +renderDashboard()
+        -processAlerts(String report)
+    }
+    
+    BaseSensor <|-- DroneSensor
+    BaseSensor <|-- WeatherSensor
+    BaseSensor o-- DataHub : communicates with
+    FleetManager --> DataHub : initializes
+```
+
+## Installation & Usage
+### Prerequisites
+
+- Java JDK 17 or higher
+
+### Build & Run
+
+```bash
+# clone repository
+git clone https://github.com/Kefmat/SensorFleetSim.git
+cd sensor-fleet-sim
+
+# compile source files
+javac src/*.java
+
+# execute simulator
+java -cp . src.FleetManager
+```
+
+### Controls
+
+- **Monitoring** – dashboard refreshes every 1000 ms
+- **Shutdown** – type `exit` and press Enter to stop the simulation and display a summary
+
+## Sample Dashboard
+
+```
+=== SENSOR FLEET DASHBOARD ===
+------------------------------------------------------------
+ID              | BATTERY    | TELEMETRY                
+------------------------------------------------------------
+DRONE-Alfa      | 88.5%      | Alt: 102.4m             
+STATION-Oslo    | 99.1%      | Temp: 14.2C | Wind: 16.5m/s
+------------------------------------------------------------
+Status: 42 reports received. Type 'exit' to stop.
+> 
+```
+This project serves as a demonstration of Concurrent Systems, Object-Oriented Design (OOD), and Real-time Data Ingestion in Java.
