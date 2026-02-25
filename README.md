@@ -19,6 +19,7 @@ graph TD
         DH{DataHub}
         AL[Alert Processor]
         LOG[Persistent Logger]
+        REP[Report Generator]
     end
 
     subgraph UI_Layer [Presentation]
@@ -29,14 +30,16 @@ graph TD
     DH --> AL
     DH --> LOG
     AL -->|Trigger| CLI
+    DH -->|On Shutdown| REP
 ``` 
 
 ## Key Engineering Features
 
 - **Advanced concurrency** – uses `ExecutorService` for thread lifecycle management and `ConcurrentHashMap`/`CopyOnWriteArrayList` for lock-free, thread-safe state.
+- **Automated Engineering Reports** – Generates standardized Markdown reports upon shutdown, including system metadata (OS, Java version) and incident distribution charts via Mermaid.
 - **Polymorphic telemetry** – `BaseSensor` makes it easy to add new sensor types.
 - **Non-blocking I/O** – `FleetManager` polls `System.in` while refreshing the dashboard at 1 Hz.
-- **Automated risk analysis**
+- **Real time risk analysis**
   - Battery check (warning below 20 %)
   - Flight safety (altitude threshold)
   - Meteorological alerts (wind-speed storm detection)
@@ -72,11 +75,16 @@ classDiagram
         +receiveData(String report)
         +renderDashboard()
         -processAlerts(String report)
+        +showSummary()
+    }
+    class ReportGenerator {
+        +generateMarkdownReport()
     }
     
     BaseSensor <|-- DroneSensor
     BaseSensor <|-- WeatherSensor
     BaseSensor o-- DataHub : communicates with
+    DataHub --> ReportGenerator : triggers
     FleetManager --> DataHub : initializes
 ```
 
@@ -101,8 +109,12 @@ java -cp . src.FleetManager
 
 ### Controls
 
-- **Monitoring** – dashboard refreshes every 1000 ms
+- **Monitoring** – dashboard updates every 1000 ms
 - **Shutdown** – type `exit` and press Enter to stop the simulation and display a summary
+```bash
+java -Dreport.file=MISSION_ALPHA.md -cp . src.FleetManager
+```
+- **Custom Reports** - You can specify the output filename using a system property:
 
 ## Sample Dashboard
 
