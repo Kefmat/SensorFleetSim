@@ -62,7 +62,7 @@ public class DataHub {
             }
         });
         System.out.println("------------------------------------------------------------");
-        System.out.println("Status: " + totalReports + " rapporter mottatt. Skriv 'exit' for stop.");
+        System.out.println("Status: " + totalReports + " rapports recieved. Type 'exit' to stopp.");
         System.out.print("> ");
     }
 
@@ -71,7 +71,7 @@ public class DataHub {
              PrintWriter out = new PrintWriter(fw)) {
             out.println(entry);
         } catch (IOException e) {
-            System.err.println("Feil ved skriving til fil: " + e.getMessage());
+            System.err.println("Error writing to log file: " + e.getMessage());
         }
     }
 
@@ -112,14 +112,22 @@ public class DataHub {
 
     public void showSummary() {
         System.out.println("\n" + CYAN + "=== FINAL SESSION STATISTICS ===" + RESET);
-        System.out.println("Totalt antall rapporter behandlet: " + totalReports);
-        System.out.println("Laveste observerte batterinivå: " + String.format("%.1f%%", minBatteryObserved));
-        System.out.println("Høyeste observerte vindstyrke: " + String.format("%.1f m/s", maxWindSpeed));
+        System.out.println("Packets processed: " + totalReports);
+        System.out.println("Lowest battery: " + String.format("%.1f%%", minBatteryObserved));
+        System.out.println("Peak wind speed: " + String.format("%.1f m/s", maxWindSpeed));
         System.out.println("-----------------------------------------");
-        System.out.println(YELLOW + "Antall Batteri-advarsler: " + batteryAlerts + RESET);
-        System.out.println(RED + "Antall Høyde-kritiske feil: " + altitudeAlerts + RESET);
-        System.out.println(RED + "Antall Storm-varsler: " + stormWarnings + RESET);
+        System.out.println("Battery warnings: " + batteryAlerts);
+        System.out.println("Altitude criticals: " + altitudeAlerts);
+        System.out.println("Storm warnings: " + stormWarnings);
         System.out.println("-----------------------------------------");
-        System.out.println("Full logg er lagret i: " + LOG_FILE);
+
+        ReportGenerator.generateMarkdownReport(
+            totalReports, 
+            batteryAlerts, 
+            altitudeAlerts, 
+            stormWarnings, 
+            minBatteryObserved, 
+            maxWindSpeed
+        );
     }
 }
