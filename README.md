@@ -45,6 +45,10 @@ graph TD
   - Meteorological alerts (wind-speed storm detection)
 - **Persistent logging** – every report and alert is appended to `telemetry_log.txt` safely.
 
+## Engineering Report Preview
+**When the system shuts down, it generates a formal `session_report.md`. Below is a preview of the automated output:**
+
+<img width="1246" height="943" alt="f53b8e0ff93f58b6d3e1ea9a2f285033" src="https://github.com/user-attachments/assets/6b99898e-94d1-4978-b470-3279e7e8031c" />
 
 ## Class Architecture
 
