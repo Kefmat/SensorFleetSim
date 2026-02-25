@@ -8,7 +8,6 @@ public class DataHub {
     private final CopyOnWriteArrayList<String> dataLog = new CopyOnWriteArrayList<>();
     private final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm:ss");
 
-    // ANSI fargekoder for terminal-output
     private static final String RESET = "\u001B[0m";
     private static final String RED = "\u001B[31m";
     private static final String YELLOW = "\u001B[33m";
@@ -20,35 +19,41 @@ public class DataHub {
         dataLog.add(entry);
 
         System.out.println(CYAN + "LOG -> " + entry + RESET);
-
         processAlerts(report);
     }
 
     private void processAlerts(String report) {
         try {
+            String droneId = report.split(" \\| ")[0];
             
-            // Henter ut batteri
+            // Felles parsing for batteri (alle sensorer har batteri)
             String batPart = report.split("Bat: ")[1].split("%")[0].replace(",", ".");
             double battery = Double.parseDouble(batPart);
 
-            // Henter ut høyde
-            String altPart = report.split("Alt: ")[1].split("m")[0].replace(",", ".");
-            double altitude = Double.parseDouble(altPart);
-
-            // Henter ut ID (første del av strengen)
-            String droneId = report.split(" \\| ")[0];
-
-            // Sjekk terskelverdier
             if (battery < 20.0) {
                 System.err.println(YELLOW + "  WARNING [" + droneId + "]: Low Battery! (" + battery + "%)" + RESET);
             }
 
-            if (altitude < 50.0) {
-                System.err.println(RED + " CRITICAL [" + droneId + "]: Unsafe Altitude! (" + altitude + "m)" + RESET);
+            // Spesifikk logikk for Drone (Høyde)
+            if (report.contains("Alt:")) {
+                String altPart = report.split("Alt: ")[1].split("m")[0].replace(",", ".");
+                double altitude = Double.parseDouble(altPart);
+                if (altitude < 50.0) {
+                    System.err.println(RED + " CRITICAL [" + droneId + "]: Unsafe Altitude! (" + altitude + "m)" + RESET);
+                }
+            }
+
+            // Spesifikk logikk for Værstasjon (Vind)
+            if (report.contains("Wind:")) {
+                String windPart = report.split("Wind: ")[1].split("m/s")[0].replace(",", ".");
+                double wind = Double.parseDouble(windPart);
+                if (wind > 15.0) {
+                    System.err.println(RED + " STORM WARNING [" + droneId + "]: High Winds! (" + wind + "m/s)" + RESET);
+                }
             }
 
         } catch (Exception e) {
-            System.err.println(RED + "ERROR: Failed to process report - " + e.getMessage() + RESET);
+            // Ignorerer parsing-feil for å holde huben kjørende
         }
     }
 
